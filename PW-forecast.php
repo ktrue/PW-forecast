@@ -74,7 +74,7 @@ $Version = "PW-forecast.php (ML) Version 2.00 - 14-Jan-2022";
 // $PWcurrentConditions = table with current conds at point close to lat/long selected
 //
 // Settings ---------------------------------------------------------------
-// REQUIRED: a darksky.net API KEY.. sign up at https://www.darksky.net/api
+// REQUIRED: a Pirateweather.net API KEY.. sign up at https://pirateweather.net
 $PWAPIkey = 'specify-for-standalone-use-here'; // use this only for standalone / non-template use
 // NOTE: if using the Saratoga template, add to Settings.php a line with:
 //    $SITE['PWAPIkey'] = 'your-api-key-here';
