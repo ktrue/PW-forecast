@@ -70,7 +70,7 @@ You DO have to add a **$SITE['PWAPIkey'] = '_your-key-here_';** and a **$SITE['P
 
 <dl>
 
-<dt>**$PWAPIkey = 'specify-for-standalone-use-here';**</dt>
+<dt>$PWAPIkey = 'specify-for-standalone-use-here';</dt>
 
 <dd>This setting is for **standalone** use (do not change this for Saratoga templates).  
 Register for a Pirateweather API Key at **[https://www.pirateweather.net/account/create](https://www.pirateweather.net/account/create)** and replace _specify-for-standalone-use-here_ with the registered API key. The script will nag you if this has not been done.  
@@ -81,54 +81,54 @@ $SITE['PWAPIkey'] = '_your-key-here_';
 
 to allow easy future updates of the PW-forecast.php script by simple replacement.</dd>
 
-<dt>**$iconDir**</dt>
+<dt>$iconDir</dt>
 
 <dd>This setting controls whether to display the NOAA-styled icons on the forecast display.  
 Set $iconDir to the relative file path to the Saratoga Icon set (same set as used with the WXSIM plaintext-parser.php script).  
 Be sure to include the trailing slash in the directory specification as shown in the example above.  
 **Saratoga template users:** Use the _Settings.php_ entry for **$SITE['fcsticonsdir']** to specify this value.</dd>
 
-<dt>**$iconType**</dt>
+<dt>$iconType<dt>
 
 <dd>This setting controls the extension (type) for the icon to be displayed.  
 **='.jpg';** for the default Saratoga JPG icon set.  
 **='.gif';** for the Meteotriviglio animated GIF icon set.  
 **Saratoga template users:** Use the _Settings.php_ entry for **$SITE['fcsticonstype']** to specify this value.</dd>
 
-<dt>**$PWforecasts = array(  
+<dt>$PWforecasts = array(  
 // Location|forecast-URL (separated by | characters)  
 'Saratoga|37.27465,-122.02295',  
 'Auckland|-36.910,174.771', // Awhitu, Waiuku New Zealand  
 
 ...  
-);**</dt>
+);</dt>
 
 <dd>This setting is the primary method of specifying the locations for forecasts. It allows the viewer to choose between forecasts for different areas based on a drop-down list box selection.  
 **Saratoga template users**: Use the _Settings.php_ entry for **$SITE['PWforecasts'] = array(...);** to specify the list of sites and URLs.</dd>
 
-<dt>**$maxWidth**</dt>
+<dt>$maxWidth</dt>
 
 <dd>This variable controls the maximum width of the tables for the icons and text display. It may be in pixels (as shown), or '100%'. The Saratoga/NOAA icons are 55px wide and there are up to 8 icons, so beware setting this width too small as the display may be quite strange.</dd>
 
-<dt>**$maxIcons**</dt>
+<dt>$maxIcons<dt>
 
 <dd>This variable specifies the maximum number of icons to display in the graphical part of the forecast. Some forecast locations may have up to 8 days of forecast (8 icons) so be careful how wide the forecast may become on the page.</dd>
 
-<dt>**$cacheFileDir**</dt>
+<dt>$cacheFileDir</dt>
 
 <dd>This setting specifies the directory to store the cache files. The default is the same directory in which the script is located.  
 Include the trailing slash in the directory specification.  
 **Saratoga template users:** Use the _Settings.php_ entry for **$SITE['cacheFileDir']** to specify this value.</dd>
 
-<dt>**$cacheName**</dt>
+<dt>$cacheName</dt>
 
 <dd>This variable specifies the name of the cache file for the PW forecast page.</dd>
 
-<dt>**$refetchSeconds**</dt>
+<dt>$refetchSeconds</dt>
 
 <dd>This variable specifies the cache lifetime, or how long to use the cache before reloading a copy from Pirateweather. The default is 3600 seconds (60 minutes). Forecasts don't change very often, so please don't reduce it below 60 minutes to minimize your API access count and keep it to the free Developer API range.</dd>
 
-<dt>**$showUnitsAs**</dt>
+<dt>$showUnitsAs</dt>
 
 <dd>This setting controls the units of measure for the forecasts.  
 **='si'** SI units (C,m/s,hPa,mm,km)  
@@ -138,7 +138,7 @@ Include the trailing slash in the directory specification.
 **Saratoga template users:** This setting will be overridden by the **$SITE['PWshowUnitsAs']** specified in your _Settings.php_.  
 </dd>
 
-<dt>**$foldIconRow**</dt>
+<dt>$foldIconRow</dt>
 
 <dd>This setting controls 'folding' of the icons into two rows if the aggregate width of characters exceeds the $maxSize dimension in pixels.  
 **= true;** is the default (fold the row)  
@@ -226,8 +226,8 @@ If Standalone and running in a custom page:
 
 # Sample output
 
-<img src="./sample-output-1.png" alt="sample output 1">
+![English](./sample-output-1.png)
 
-<img src="./sample-output-2.png" alt="sample output 2">
+![Dutch](./sample-output-2.png)
 
-<img src="./sample-output-3.png" alt="sample output 3">
+![Dutch Hourly](./sample-output-3.png)
