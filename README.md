@@ -73,7 +73,7 @@ You DO have to add a **$SITE['PWAPIkey'] = '_your-key-here_';** and a **$SITE['P
 <dt>$PWAPIkey = 'specify-for-standalone-use-here';</dt>
 
 <dd>This setting is for **standalone** use (do not change this for Saratoga templates).  
-Register for a Pirateweather API Key at **[https://www.pirateweather.net/account/create](https://www.pirateweather.net/account/create)** and replace _specify-for-standalone-use-here_ with the registered API key. The script will nag you if this has not been done.  
+Register for a Pirateweather API Key at [https://www.pirateweather.net/](https://www.pirateweather.net/) and replace _specify-for-standalone-use-here_ with the registered API key. The script will nag you if this has not been done.  
 
 **For Saratoga template users**, do the registration at the Pirateweather API site above, then put your API key in your _Settings.php_ as:  
 
