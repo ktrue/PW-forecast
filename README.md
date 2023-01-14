@@ -205,8 +205,6 @@ If you'd like to style the output, you can easily do so by setting a CSS for cla
 </style>
 ```
 
-**Note:** as of PW-forecast.php V2.00, pages that _include_() the PW-forecast.php script **must have an added CSS** in the <head>...</.head> part of the page. You can download the needed CSS from [here](./PW-forecast.css). Either include that inline in the calling page, or add it to the existing CSS for your page.
-
 ## Installation of PW-forecast.php
 
 Download **PW-forecast.php** and **PW-forecast-lang.php** .
