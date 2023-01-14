@@ -226,8 +226,6 @@ If Standalone and running in a custom page:
 
 # Sample output
 
-![English](./sample-output-1.png)
-
-![Dutch](./sample-output-2.png)
-
-![Dutch Hourly](./sample-output-3.png)
+![English](https://user-images.githubusercontent.com/17507343/212497961-e46b0068-91f4-42c0-ba4d-81b0458c0f7e.png)
+![Dutch](https://user-images.githubusercontent.com/17507343/212497962-77d63ed7-7620-4147-a358-66b2a77b836a.png)
+![Dutch Hourly](https://user-images.githubusercontent.com/17507343/212497963-55035f48-1437-407f-a376-bc45e76c34b6.png)
