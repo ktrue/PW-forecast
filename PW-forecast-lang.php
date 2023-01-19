@@ -11,6 +11,7 @@
 # Version 1.05 - 10-Jan-2019 - added correction for Danish translation
 # Version 1.06 - 23-Jan-2019 - added translations for DS-forecast Hourly forecasts
 # Version 2.00 - 14-Jan-2023 - reused code from DS-forecast-lang.php, added translation terms
+# Version 2.50 - 18-Jan-2023 - for general release with PW-forecast.php V2.50
 # NOTE: this file is required for translations by PW-forecast.php script.
 # Author: Ken True - https://saratoga-weather.org/
 # 
@@ -21,7 +22,7 @@
 # Languages: af,bg,cs,ct,de,dk,el,es,fi,fr,he,hu,it,nl,no,pl,pt,ro,se,si,sk,sr
 
 $vstr = 'gen-PWlang.php - V1.07 - 14-Jan-2023';
-$genstr = '14-Jan-2023 12:06:35 PST';
+$genstr = '18-Jan-2023 12:06:35 PST';
 $verstring = '#
 # Version 1.00 - 16-Nov-2018 - initial release
 # Version 1.01 - 17-Nov-2018 - added translations for wind units
@@ -31,6 +32,7 @@ $verstring = '#
 # Version 1.05 - 10-Jan-2019 - added correction for Danish translation
 # Version 1.06 - 23-Jan-2019 - added translations for DS-forecast Hourly forecasts
 # Version 2.00 - 14-Jan-2023 - reused code from DS-forecast-lang.php, added translation terms
+# Version 2.50 - 18-Jan-2023 - for general release with PW-forecast.php V2.50
 ';
 #
 define('TRANTABLE',

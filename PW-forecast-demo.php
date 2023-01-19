@@ -218,6 +218,7 @@ $SITE['WULanguages'] = array ( // for WeatherUnderground forecast supported lang
 	}
 	$doIncludePW = true;
 	$doPrintPW = true;
+	$useUTF8   = true;
 	print "<div style=\"border: 1px solid black; margin: 5px;\">\n";
 	include_once("PW-forecast.php");
 	print "</div>\n";

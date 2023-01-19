@@ -15,8 +15,9 @@
 // Version 1.10 - 19-Jan-2022 - fix for PHP 8.1 Deprecated errata
 // Version 1.11 - 27-Dec-2022 - fixes for PHP 8.2
 // Version 2.00 - 14-Jan-2022 - repurposed PW-forecast.php to use Pirateweather.net API instead
+// Version 2.50 - 18-Jan-2022 - replaced hourly view with merry-timeline 7-day hourly view summary
 //
-$Version = "PW-forecast.php (ML) Version 2.00 - 14-Jan-2022";
+$Version = "PW-forecast.php (ML) Version 2.50 - 18-Jan-2022";
 //
 // error_reporting(E_ALL);  // uncomment to turn on full error reporting
 //
@@ -178,7 +179,7 @@ $PWcurrentConditions = ''; // HTML for table of current conditions
 
 if(preg_match('|specify|i',$PWAPIkey)) {
 	print "<p>Note: the PW-forecast.php script requires an API key from Pirateweather.net to operate.<br/>";
-	print "Visit <a href=\"https://www.darksky.net/account/create\">darksky.net</a> to ";
+	print "Visit <a href=\"https://pirateweather.net/\">pirateweather.net</a> to ";
 	print "register for an API key.</p>\n";
 	if( isset($SITE['fcsturlPW']) ) {
 		print "<p>Insert in Settings.php an entry for:<br/><br/>\n";
@@ -244,14 +245,6 @@ if(!function_exists('json_last_error')) {
 
 PW_loadLangDefaults (); // set up the language defaults
 
-if($charsetOutput == 'UTF-8') {
-	foreach ($PWlangCharsets as $l => $cs) {
-		$PWlangCharsets[$l] = 'UTF-8';
-	}
-	$Status .= "<!-- charsetOutput UTF-8 selected for all languages. -->\n";
-	$Status .= "<!-- PWlangCharsets\n".print_r($PWlangCharsets,true)." \n-->\n";	
-}
-
 $PWLANG = 'en'; // Default to English for API
 $lang = strtolower($lang); 	
 if( isset($PWlanguages[$lang]) ) { // if $lang is specified, use it
@@ -285,6 +278,23 @@ if (!empty($_GET['z']) && preg_match("/^[0-9]+$/i", htmlspecialchars($_GET['z'])
 if(!isset($PWforecasts[0])) {
 	// print "<!-- making NWSforecasts array default -->\n";
 	$PWforecasts = array("Saratoga|37.27465,-122.02295"); // create default entry
+}
+
+if(isset($useUTF8) and $useUTF8) {
+	$charsetOutput = 'UTF-8';
+	$Status .= "<!-- useUTF8 enabled -->\n";
+}
+
+if($charsetOutput == 'UTF-8') {
+	foreach ($PWlangCharsets as $l => $cs) {
+		$PWlangCharsets[$l] = 'UTF-8';
+	}
+	$Status .= "<!-- charsetOutput UTF-8 selected for all languages. -->\n";
+	$Status .= "<!-- PWlangCharsets\n".var_export($PWlangCharsets,true)." \n-->\n";	
+}
+
+if(!headers_sent()) {
+	header('Content-type: text/html,charset='.$charsetOutput);
 }
 
 //  print "<!-- NWSforecasts\n".print_r($PWforecasts,true). " -->\n";
@@ -354,7 +364,7 @@ $showTempsAs = ($showUnitsAs == 'us')? 'F':'C';
 $Status .= "<!-- temps in $showTempsAs -->\n";
 
 $fileName = "https://api.pirateweather.net/forecast/$PWAPIkey/$PW_LATLONG" .
-      "?exclude=minutely&lang=$PWLANG&units=$showUnitsAs";
+      "?exclude=minutely&extend=hourly&units=$showUnitsAs";
 
 if ($doDebug) {
   $Status .= "<!-- PW URL: $fileName -->\n";
@@ -427,7 +437,7 @@ if (! $Force and file_exists($cacheName) and filemtime($cacheName) + $refetchSec
 			$Status .= "<!-- saved cache to $cacheName (". strlen($html) . " bytes) -->\n";
 			} 
 		} else {
-			$Status .= "<!-- bad return from $APIfileName\n".print_r($html,true)."\n -->\n";
+			$Status .= "<!-- bad return from $APIfileName\n".var_export($html,true)."\n -->\n";
 			if(file_exists($cacheName) and filesize($cacheName) > 3000) {
 				$html = implode('', file($cacheName));
 				$Status .= "<!-- reloaded stale cache $cacheName temporarily -->\n";
@@ -447,7 +457,8 @@ if (! $Force and file_exists($cacheName) and filemtime($cacheName) + $refetchSec
 	 $doIconv = false;
  }
  $Status .= "<!-- using charsetInput='$charsetInput' charsetOutput='$charsetOutput' doIconv='$doIconv' doRTL='$doRTL' -->\n";
- $tranTab = PW_loadTranslate($lang);
+
+ $tranTab = PW_loadTranslate($lang,$charsetOutput);
  
   $i = strpos($html,"\r\n\r\n");
   $headers = substr($html,0,$i-1);
@@ -469,7 +480,7 @@ if (! $Force and file_exists($cacheName) and filemtime($cacheName) + $refetchSec
   $rawJSON = PW_prepareJSON($rawJSON);
   $JSON = json_decode($rawJSON,true); // get as associative array
   $Status .= PW_decode_JSON_error();
-  $Status .= "<!-- JSON\n".print_r($JSON,true)." -->\n";
+  #if(isset($_GET['debug'])) {$Status .= "<!-- JSON\n".var_export($JSON,true)." -->\n";}
  
 if(isset($JSON['daily']['data'][0]['time'])) { // got good JSON .. process it
    $UnSupported = false;
@@ -670,6 +681,11 @@ if(isset($JSON['daily']['data'][0]['time'])) { // got good JSON .. process it
 	
 	$PWforecastcond[$n] = isset($tranTab[trim($FCpart['summary'])])?
 	   $tranTab[trim($FCpart['summary'])]:trim($FCpart['summary']); // take first one as summary.
+  if($doIconv) {
+		$PWforecastcond[$n] = iconv("UTF-8",$charsetOutput.'//IGNORE',$PWforecastcond[$n]);
+	}
+
+
 	if ($doDebug) {
       $Status .= "<!-- forecastcond[$n]='" . $PWforecastcond[$n] . "' -->\n";
 	}
@@ -861,6 +877,24 @@ if (isset($currently['time']) ) { // only generate if we have the data
 } // end of if isset($currently['cityobserved'])
 // end of current conditions mods
 
+$timelineColors = array(
+// timeline Colors to use for each condition
+   "Clear" => "#eeeef5",
+   "Partly Cloudy" => "#d5dae2",
+   "Cloudy"=> "#b6bfcb",
+   "Rain"  => "#4a80c7",
+   "Light Rain" => "#80a5d6",
+   "Drizzle" => "#a4b8d4",
+   "Snow" => "#8c82ce",
+   "Light Snow" => "#aba4db",
+   "Flurries"=> "#b7b2db",
+   "Sleet"=> "#6264a7",
+   "Fog" => "#d5dae2",
+   "Wind" => "#ffdead",
+   "Windy" => "#ffdead",
+
+);
+
 if(isset($JSON['hourly']['data'][0]['time'])) { // process Hourly forecast data
 /*
 	"hourly": {
@@ -887,6 +921,75 @@ if(isset($JSON['hourly']['data'][0]['time'])) { // process Hourly forecast data
 				"ozone": 289.95
 			}, {
 */
+  $newJSON = array(); // storage for the merry-timeline JSON
+/*
+  {
+    "color": "#b7b2db",
+    "text": "Flurries",
+    "annotation": "0°",
+    "time": 1672257600
+  },
+*/
+  $tempUOM = str_replace('&deg;'," ",$UnitsTab[$showUnitsAs]['T']);	
+  foreach($JSON['hourly']['data'] as $i => $H) {
+     $dayname = date('l',$H['time']);
+		 if(isset($tranTab[$dayname])) {$dayname = $tranTab[$dayname];
+		 if($doIconv) {iconv($charsetInput,$charsetOutput.'//TRANSLIT',$dayname); }
+		 $dayname .= ', '.date('d',$H['time']);
+		 $tColor = isset($timelineColors[$H['summary']])?$timelineColors[$H['summary']]:'#fefefe';
+		 $text = isset($tranTab[$H['summary']])?$tranTab[$H['summary']]:$H['summary'];
+		 if($doIconv) {iconv($charsetInput,$charsetOutput.'//TRANSLIT',$text);}
+     $newJSON[$dayname][] = array(
+		   'color' => $tColor,
+			 'text'  => $text,
+			 'annotation' => round($H['temperature'],0).$tempUOM,
+			 'time'  => $H['time']
+			 );
+	} // end each hourly forecast parsing
+
+} // end process hourly forecast data
+  $utfdata = json_encode($newJSON,JSON_UNESCAPED_UNICODE);
+  $merrytimelineJSON = ($doIconv)?iconv('UTF-8',$charsetOutput.'//TRANSLIT//IGNORE',$utfdata):$utfdata;
+	$hourlyData =  "<script type=\"text/javascript\">\n";
+	$hourlyData .= "// hourly data \n// <![CDATA[\n";
+	$hourlyData .= "var weatherData = ".$merrytimelineJSON.";\n// ]]>\n";
+	$hourlyData .= "</script>\n";
+	if(isset($_GET['debug'])) {
+		$hourlyData .= "<!-- newJSON array\n".var_export($newJSON,true)." -->\n";
+	}
+  if(isset($_GET['snapshot'])) {
+		file_put_contents('./raw-weatherData-json.txt',$merrytimelineJSON);
+		file_put_contents('./raw-newJSON-array.txt',var_export($newJSON,true));
+		$Status .= "<!-- snapshots taken -->\n";
+	}
+
+/* old version
+if(isset($JSON['hourly']['data'][0]['time'])) { // process Hourly forecast data
+/*
+	"hourly": {
+		"summary": "Mostly cloudy throughout the day.",
+		"icon": "partly-cloudy-night",
+		"data": [{
+				"time": 1548018000,
+				"summary": "Mostly Cloudy",
+				"icon": "partly-cloudy-day",
+				"precipIntensity": 0.1422,
+				"precipProbability": 0.29,
+				"precipType": "rain",
+				"temperature": 14.91,
+				"apparentTemperature": 14.91,
+				"dewPoint": 11.49,
+				"humidity": 0.8,
+				"pressure": 1017.89,
+				"windSpeed": 10.8,
+				"windGust": 24.54,
+				"windBearing": 226,
+				"cloudCover": 0.88,
+				"uvIndex": 2,
+				"visibility": 14.11,
+				"ozone": 289.95
+			}, {
+//
   foreach($JSON['hourly']['data'] as $i => $FCpart) {
     $PWforecasticonHR[$i] = PW_gen_hourforecast($FCpart);
 		
@@ -906,11 +1009,11 @@ if(isset($JSON['hourly']['data'][0]['time'])) { // process Hourly forecast data
 		
 
 	} // end each hourly forecast parsing
-} // end process hourly forecast data
-  
+*/
 
-  
- 
+
+  } // end process hourly forecast data
+
 } // end got good JSON decode/process
 
 // end process JSON style --------------------------------------------------------------------
@@ -1290,9 +1393,32 @@ if($doIconv) {
 	$t = iconv($charsetInput,$charsetOutput.'//TRANSLIT',$t). ' '; 
 }
 echo $t; ?></h2>
-    <div style="width: 99%;">
-    <table style="border: 0" width="<?php print $maxWidth; ?>" class="PWforecast">
-	 <?php 
+    <div id="timelines" style="width: 99%;">
+    <?php print $hourlyData; ?>
+    <!-- table style="border: 0" width="<?php print $maxWidth; ?>" class="PWforecast" -->
+    <script type="text/javascript">
+// <![CDATA[
+  const timelineReinit = async () => {
+  const domExamples = document.getElementById("timelines");
+  domExamples.innerHTML = "";
+  Object.keys(weatherData).forEach(async (key) => {
+    const data = weatherData[key];
+    const hourly = data;
+
+    const exampleHeader = document.createElement("p");
+    exampleHeader.innerText = key;
+
+    domExamples.append(exampleHeader);
+    const exampleDiv = document.createElement("div");
+    domExamples.append(exampleDiv);
+    timeline(exampleDiv, hourly, { timezone: "<?php echo $JSON['timezone'] ?>" });
+  });
+};
+
+timelineReinit();
+// ]]>		
+		</script>
+	 <?php /*
      for ($row=0;$row<4;$row++) {
        print "	      <tr valign=\"top\" align=\"center\"$RTLopt>\n";
 			 for ($n=$row*8;$n<$row*8+8;$n++) {
@@ -1346,9 +1472,10 @@ echo $t; ?></h2>
 		   print "</tr>\n";
 			 print "<tr><td colspan=\"8\"><hr/></td></tr>\n";
 		 } // end rows
-?>
-    </table>
+ */ ?>
+    <!-- /table -->
     </div>
+    <p>Timeline display based on <a href="https://github.com/guillaume/merry-timeline">Merry-Timeline</a> by Guillaume Carbonneau</p>
 </div>
 </div>
 <p>&nbsp;</p>
@@ -1781,7 +1908,7 @@ function PW_loadLangDefaults () {
 
 } // end loadLangDefaults
 
-function PW_loadTranslate ($lang) {
+function PW_loadTranslate ($lang,$charsetOutput) {
 	global $Status;
 	
 /*
@@ -1900,7 +2027,15 @@ $default = array(
  
  if(isset($t[$lang])) {
 	 $Status .= "<!-- loaded translations for lang='$lang' for period names -->\n";
-	 return($t[$lang]);
+	 $ourLang = $t[$lang];
+	/* if($charsetOutput !== 'UTF-8') {
+		 foreach ($ourLang as $term => $val) {
+			 $ourLang[$term] = iconv('UTF-8',$charsetOutput.'//IGNORE',$val);
+		 }
+	   $Status .= "<!-- converted lang='$lang' to charset='$charsetOutput' -->\n";
+	 }
+	 */
+	 return($ourLang);
  } else {
 	 $Status .= "<!-- loading English period names -->\n";
 	 return($default);
@@ -1932,13 +2067,13 @@ function PW_WindDir ($degrees) {
 // ------------------------------------------------------------------
 
 function PW_WindDirTrans($inwdir) {
-	global $tranTab, $Status;
+	global $tranTab, $Status, $charsetOutput;
 	$wdirs = $tranTab['NESW'];  // default directions
 	$tstr = $inwdir;
-	$Status .= "<!-- PW_WindDirTrans in=$inwdir using ";
+	$tStatus = "<!-- PW_WindDirTrans in=$inwdir using ";
 	if(strlen($wdirs) == 4) {
 		$tstr = strtr($inwdir,'NESW',$wdirs); // do translation
-		$Status .= " strtr for ";
+		$tStatus .= " strtr for ";
 	} elseif (preg_match('|,|',$wdirs)) { //multichar translation
 		$wdirsmc = explode(',',$wdirs);
 		$wdirs = array('N','E','S','W');
@@ -1955,10 +2090,13 @@ function PW_WindDirTrans($inwdir) {
 				$tstr .= $c; // use regular
 			}
 		}
-		$Status .= " array substitute for ";
+		$tStatus .= " array substitute for ";
 	}
-	$Status .= "NESW=>'".$tranTab['NESW']."' output='$tstr' -->\n";
-
+	$tStatus .= "NESW=>'".$tranTab['NESW']."' output='$tstr' -->\n";
+  if($charsetOutput !== 'UTF-8') {
+		$tStatus = iconv('UTF-8',$charsetOutput.'//TRANSLIT//IGNORE',$tStatus);
+	}
+	$Status .= $tStatus;
   return($tstr);
 }
 
@@ -1980,6 +2118,8 @@ function PW_sources ($sArray) {
 	'gfs'        => 'The USA NOAA&rsquo;s Global Forecast System|http://en.wikipedia.org/wiki/Global_Forecast_System',
 	'gefs'       => 'The Global Ensemble Forecast System (GEFS) is the ensemble version of NOAA\'s GFS model|https://www.ncei.noaa.gov/products/weather-climate-models/global-ensemble-forecast',
 	'hrrr'       => 'The USA NOAA&rsquo;s High-Resolution Rapid Refresh Model|https://rapidrefresh.noaa.gov/hrrr/',
+	'hrrrsubh'       => 'The USA NOAA&rsquo;s High-Resolution Rapid Refresh Model sub-hour |https://rapidrefresh.noaa.gov/hrrr/',
+	'ETOPO1'       => '1 Arc-Minute Global Relief Model from NCEI at USA NOAA |https://www.ncei.noaa.gov/products/etopo-global-relief-model',
 	'icon'       => 'The German Meteorological Office&rsquo;s icosahedral nonhydrostatic|https://www.dwd.de/EN/research/weatherforecasting/num_modelling/01_num_weather_prediction_modells/icon_description.html',
 	'isd'        => 'The USA NOAA&rsquo;s Integrated Surface Database|https://www.ncdc.noaa.gov/isd',
 	'madis'      => 'The USA NOAA/ESRL&rsquo;s Meteorological Assimilation Data Ingest System|https://madis.noaa.gov/',
@@ -2672,8 +2812,237 @@ if (typeof tabberOptions == 'undefined') {
   }
 
 }
+
+// merry-timeline 
+const last = (list) => {
+  return list.length > 0 ? list[list.length - 1] : null;
+};
+
+const formatHour = (time, timezone) => {
+  const options = { timeStyle: "short" };
+  if (timezone) {
+    options.timeZone = timezone;
+  }
+  const formattedHour = new Date(time * 1000).toLocaleString("en-US", options);
+  const [hmm, ampm] = formattedHour.split(" ");
+  const [h /*, _mm*/] = hmm.split(":");
+  return h + ampm.toLowerCase();
+};
+
+const isDarkText = (bgColor) => {
+  var color = bgColor.charAt(0) === "#" ? bgColor.substring(1, 7) : bgColor;
+  var r = parseInt(color.substring(0, 2), 16);
+  var g = parseInt(color.substring(2, 4), 16);
+  var b = parseInt(color.substring(4, 6), 16);
+  return r * 0.299 + g * 0.587 + b * 0.114 > 186;
+};
+
+const getTimelineRange = (merryData) => {
+  const { min: start, max: end } = merryData.reduce(
+    ({ max, min }, h) => {
+      return { max: Math.max(max, h.time), min: Math.min(min, h.time) };
+    },
+    { min: Infinity, max: 0 }
+  );
+
+  return { start, end: end + 3600 };
+};
+
+const init = (domElement, merryData, options) => {
+  const timelineWidth = options.width || domElement.offsetWidth;
+
+  const timelineDom = document.createElement("div");
+  timelineDom.className = "timeline";
+  timelineDom.style.width = timelineWidth + "px";
+  timelineDom.style.height = "95px";
+  timelineDom.style.position = "relative";
+
+  const stripesDom = document.createElement("div");
+  stripesDom.className = "stripes";
+  stripesDom.style.borderRadius = "5px";
+  stripesDom.style.height = "44px";
+  stripesDom.style.width = "100%";
+  stripesDom.style.position = "absolute";
+  stripesDom.style.overflow = "hidden";
+
+  let currentCategory = null;
+  const stripes = [];
+
+  merryData.forEach((h, i) => {
+    const category = [h.color, h.text].join("__");
+    if (currentCategory === null || currentCategory !== category) {
+      currentCategory = category;
+      stripes.push([]);
+    }
+    const lastStrip = last(stripes);
+    h.category = category;
+    lastStrip.push(h);
+  });
+
+  let prevWidth = 0;
+  stripes.forEach((stripe) => {
+    const text = options?.text ? options.text(stripe) : stripe[0].text;
+    const color = options?.color ? options.color(stripe) : stripe[0].color;
+    const width = (stripe.length / merryData.length) * timelineWidth;
+    const stripeDom = document.createElement("span");
+
+    stripeDom.className = "stripe";
+    stripeDom.style.height = "100%";
+    stripeDom.style.position = "absolute";
+    stripeDom.style.lineHeight = "40px";
+    stripeDom.style.textAlign = "center";
+    stripeDom.style.fontSize = "13px";
+    stripeDom.style.fontWeight = "400";
+
+    stripeDom.style.width = width + "px";
+    stripeDom.style.left = prevWidth + "px";
+    stripeDom.style.backgroundColor = color;
+    const textColorBlack = isDarkText(color);
+    stripeDom.style.color = textColorBlack ? "#333" : "#fff";
+    stripeDom.style.textShadow = textColorBlack
+      ? "1px 1px 0 rgb(255 255 255 / 50%)"
+      : "1px 1px 0 rgb(0 0 0 / 50%)";
+
+    stripeDom.style.opacity = options?.opacity ? options.opacity(stripe) : 1;
+    stripeDom.title = text;
+
+    if (width > 40) {
+      stripeDom.innerText = text;
+    }
+    stripesDom.appendChild(stripeDom);
+    prevWidth += width;
+  });
+
+  const now = options.tracker || new Date().valueOf() / 1000;
+  const { start, end } = getTimelineRange(merryData);
+  if (now > start && now < end) {
+    const currentTimeDom = document.createElement("div");
+    currentTimeDom.style.background = "rgba(255,0,0,0.5)";
+    currentTimeDom.style.width = "1px";
+    currentTimeDom.style.height = "100%";
+    currentTimeDom.style.position = "absolute";
+    const ratio = (now - start) / (end - start);
+    currentTimeDom.style.left = ratio * timelineWidth + "px";
+
+    stripesDom.appendChild(currentTimeDom);
+  }
+  timelineDom.appendChild(stripesDom);
+
+  const ticksDom = document.createElement("div");
+  ticksDom.className = "ticks";
+
+  ticksDom.style.position = "absolute";
+  ticksDom.style.top = "44px";
+  ticksDom.style.left = 0;
+  ticksDom.style.width = "100%";
+  ticksDom.style.height = "10px";
+
+  const tickSpacing = timelineWidth / merryData.length;
+  let modulo = 2;
+  if (tickSpacing < 12) {
+    modulo = 6;
+  } else if (tickSpacing < 20) {
+    modulo = 4;
+  } else if (tickSpacing < 25) {
+    modulo = 3;
+  }
+
+  for (let i = 0; i < merryData.length; i++) {
+    const tickDom = document.createElement("span");
+
+    tickDom.className = "tick " + (i % modulo ? "odd" : "even");
+
+    tickDom.style.position = "absolute";
+    tickDom.style.borderLeft = "1px solid #999";
+
+    tickDom.style.left = i * tickSpacing + "px";
+    tickDom.style.height = i % modulo ? "8px" : "5px";
+    ticksDom.appendChild(tickDom);
+  }
+  timelineDom.appendChild(ticksDom);
+
+  const hoursDom = document.createElement("div");
+  hoursDom.className = "hours";
+  hoursDom.style.position = "absolute";
+  hoursDom.style.top = "54px";
+  hoursDom.style.left = "0px";
+  hoursDom.style.width = "100%";
+  hoursDom.style.height = "5px";
+  hoursDom.style.fontWeight = 500;
+  hoursDom.style.fontSize = "14px";
+
+  for (let i = 0; i < merryData.length; i += modulo) {
+    const h = merryData[i];
+    const hourDom = document.createElement("span");
+    hourDom.className = "hour" + (i === 0 ? " first" : "");
+    hourDom.style.left = i * tickSpacing + "px";
+
+    if (i !== 0) {
+      hourDom.style.position = "absolute";
+      hourDom.style.display = "inline-block";
+      hourDom.style.width = "40px";
+      hourDom.style.marginLeft = "-20px";
+      hourDom.style.height = "5px";
+      hourDom.style.textAlign = "center";
+    }
+
+    hourDom.innerText = formatHour(h.time, options.timezone);
+    hoursDom.appendChild(hourDom);
+  }
+  timelineDom.appendChild(hoursDom);
+  if (merryData.filter((m) => m.annotation).length > 0) {
+    const annotationsDom = document.createElement("div");
+    annotationsDom.className = "annotations";
+    annotationsDom.style.position = "absolute";
+    annotationsDom.style.left = "0px";
+    annotationsDom.style.top = "70px";
+    annotationsDom.style.width = "100%";
+    annotationsDom.style.fontWeight = 300;
+
+    for (let i = 0; i < merryData.length; i += modulo) {
+      const h = merryData[i];
+      if (h.annotation) {
+        const annotationDom = document.createElement("span");
+        annotationDom.className = "annotation" + (i === 0 ? " first" : "");
+        if (i !== 0) {
+          annotationDom.style.position = "absolute";
+          annotationDom.style.display = "inline-block";
+          annotationDom.style.width = "40px";
+          annotationDom.style.marginLeft = "-20px";
+          annotationDom.style.height = "5px";
+          annotationDom.style.textAlign = "center";
+        }
+        annotationDom.style.left = i * tickSpacing + "px";
+        annotationDom.innerText = h.annotation;
+        annotationsDom.appendChild(annotationDom);
+      }
+    }
+    timelineDom.appendChild(annotationsDom);
+  }
+  return timelineDom;
+};
+const timeline = (domElement, merryData, options = {}) => {
+  domElement.replaceChildren(init(domElement, merryData, options));
+
+  window.addEventListener("resize", function (_event) {
+    domElement.replaceChildren(init(domElement, merryData, options));
+  });
+};
+
 // ]]>
 </script>
 <?php // end tabber JS
 } 
+/*
+function PW_make_JSON { $IN ) {
+	# rotten function to manually make JSON because we're not using UTF-8 for some languages
+	# this works ONLY with our structure for the input/output for merry-timeline control
+  $output = '';  
+	foreach ($IN as $day => $data) {
+		$output .= "{\"$day\":[";
+		foreach ($data as $i => $vals) {
+			$output .= "
+	
+}
+*/
 // End of functions --------------------------------------------------------------------------
