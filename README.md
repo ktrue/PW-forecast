@@ -5,6 +5,8 @@ The current languages supported are:
 
 Afrikaans | български език | český jazyk | Català | Dansk | Nederlands | English | Suomi | Français | Deutsch | Ελληνικά | Magyar | Italiano | עִבְרִית | Norsk | Polski | Português | limba română | Español | Svenska | Slovenščina | Slovenčina | Srpski
 
+Note: Version 2.5+ now includes a 7-day timeline display based on [Merry-Timeline](https://github.com/guillaume/merry-timeline) by Guillaume Carbonneau to replace the former 48 hourly forecasts with icons.
+
 In order to use this script you need to:
 
 1.  Register for and acquire a free Pirateweather API key.
@@ -224,8 +226,11 @@ If Standalone and running in a custom page:
 
 # Sample output
 ## English
-![English](https://user-images.githubusercontent.com/17507343/212497961-e46b0068-91f4-42c0-ba4d-81b0458c0f7e.png)
-## Nederlands (Dutch)
-![Dutch](https://user-images.githubusercontent.com/17507343/212497962-77d63ed7-7620-4147-a358-66b2a77b836a.png)
-## Nederlands (Dutch) Hourly
-![Dutch Hourly](https://user-images.githubusercontent.com/17507343/212497963-55035f48-1437-407f-a376-bc45e76c34b6.png)
+![English sample_output-1](https://user-images.githubusercontent.com/17507343/213339073-8373adc1-3013-4dc6-9f49-df9ec01a1890.png)
+## English (Hourly)
+![English sample_output-2](https://user-images.githubusercontent.com/17507343/213339076-f6a939e4-a3d2-4600-902e-8580e469fdbd.png)
+## Ελληνικά (Greek)
+![Greek sample_output-3](https://user-images.githubusercontent.com/17507343/213339077-cfd1e1c7-fff8-4b73-89b9-0f879f3985af.png)
+## Ελληνικά (Greek) Hourly
+![Greek sample_output-4](https://user-images.githubusercontent.com/17507343/213339071-a7669123-e2e1-425e-95e4-3b4f7e7f1ea7.png)
+
