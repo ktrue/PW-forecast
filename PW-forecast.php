@@ -14,10 +14,11 @@
 // Version 1.09 - 23-Jan-2019 - added hourly forecast and tabbed display
 // Version 1.10 - 19-Jan-2022 - fix for PHP 8.1 Deprecated errata
 // Version 1.11 - 27-Dec-2022 - fixes for PHP 8.2
-// Version 2.00 - 14-Jan-2022 - repurposed PW-forecast.php to use Pirateweather.net API instead
-// Version 2.50 - 18-Jan-2022 - replaced hourly view with merry-timeline 7-day hourly view summary
+// Version 2.00 - 14-Jan-2023 - repurposed PW-forecast.php to use Pirateweather.net API instead
+// Version 2.50 - 18-Jan-2023 - replaced hourly view with merry-timeline 7-day hourly view summary
+// Version 2.51 - 19-Jan-2023 - display ampm or 24h on timeline based on $timeFormat/$SITE['timeFormat']
 //
-$Version = "PW-forecast.php (ML) Version 2.50 - 18-Jan-2022";
+$Version = "PW-forecast.php (ML) Version 2.51 - 19-Jan-2023";
 //
 // error_reporting(E_ALL);  // uncomment to turn on full error reporting
 //
@@ -129,7 +130,6 @@ $foldIconRow = false;  // =true to display icons in rows of 5 if long texts are 
 $timeFormat = 'Y-m-d H:i T';  // default time display format
 
 $showConditions = true; // set to true to show current conditions box
-
 // ---- end of settings ---------------------------------------------------
 
 // overrides from Settings.php if available
@@ -291,6 +291,14 @@ if($charsetOutput == 'UTF-8') {
 	}
 	$Status .= "<!-- charsetOutput UTF-8 selected for all languages. -->\n";
 	$Status .= "<!-- PWlangCharsets\n".var_export($PWlangCharsets,true)." \n-->\n";	
+}
+
+if(stripos($timeFormat,'g') !== false) {
+	$showAMPMtime = true;
+	$Status .= "<!-- timeFormat='$timeFormat'. timeline hours displayed as am/pm -->\n";
+} else {
+	$showAMPMtime = false;
+	$Status .= "<!-- timeFormat='$timeFormat'. timeline hours displayed as 24hr time -->\n";
 }
 
 if(!headers_sent()) {
@@ -951,6 +959,9 @@ if(isset($JSON['hourly']['data'][0]['time'])) { // process Hourly forecast data
   $utfdata = json_encode($newJSON,JSON_UNESCAPED_UNICODE);
   $merrytimelineJSON = ($doIconv)?iconv('UTF-8',$charsetOutput.'//TRANSLIT//IGNORE',$utfdata):$utfdata;
 	$hourlyData =  "<script type=\"text/javascript\">\n";
+	$hourlyData .= "var showAMPMtime = ";
+	$hourlyData .= ($showAMPMtime)?'true;':'false;';
+	$hourlyData .= " // =true use AMPM, =false use 24h time on timeline\n";
 	$hourlyData .= "// hourly data \n// <![CDATA[\n";
 	$hourlyData .= "var weatherData = ".$merrytimelineJSON.";\n// ]]>\n";
 	$hourlyData .= "</script>\n";
@@ -2823,10 +2834,16 @@ const formatHour = (time, timezone) => {
   if (timezone) {
     options.timeZone = timezone;
   }
-  const formattedHour = new Date(time * 1000).toLocaleString("en-US", options);
-  const [hmm, ampm] = formattedHour.split(" ");
-  const [h /*, _mm*/] = hmm.split(":");
-  return h + ampm.toLowerCase();
+	if(showAMPMtime) {
+    const formattedHour = new Date(time * 1000).toLocaleString("en-US", options);
+    const [hmm, ampm] = formattedHour.split(" ");
+    const [h /*, _mm*/] = hmm.split(":");
+    return h + ampm.toLowerCase();
+	} else {
+    const formattedHour = new Date(time * 1000).toLocaleString("en-GB", options);
+    const [h, m, s] = formattedHour.split(":");
+    return h;
+	}
 };
 
 const isDarkText = (bgColor) => {
