@@ -17,8 +17,9 @@
 // Version 2.00 - 14-Jan-2023 - repurposed PW-forecast.php to use Pirateweather.net API instead
 // Version 2.50 - 18-Jan-2023 - replaced hourly view with merry-timeline 7-day hourly view summary
 // Version 2.51 - 19-Jan-2023 - display ampm or 24h on timeline based on $timeFormat/$SITE['timeFormat']
+// Version 2.52 - 24-Feb-2023 - removed conditions display 'n miles/km from' message as always zero from API
 //
-$Version = "PW-forecast.php (ML) Version 2.51 - 19-Jan-2023";
+$Version = "PW-forecast.php (ML) Version 2.52 - 24-Feb-2023";
 //
 // error_reporting(E_ALL);  // uncomment to turn on full error reporting
 //
@@ -293,7 +294,7 @@ if($charsetOutput == 'UTF-8') {
 	$Status .= "<!-- PWlangCharsets\n".var_export($PWlangCharsets,true)." \n-->\n";	
 }
 
-if(stripos($timeFormat,'g') !== false) {
+if(stripos($timeFormat,'g') !== false or $showUnitsAs == 'us') {
 	$showAMPMtime = true;
 	$Status .= "<!-- timeFormat='$timeFormat'. timeline hours displayed as am/pm -->\n";
 } else {
@@ -716,9 +717,10 @@ if(isset($JSON['daily']['data'][0]['time'])) { // got good JSON .. process it
     $Status.= "<!-- preparing " . count($JSON['alerts']) . " warning links -->\n";
     foreach($JSON['alerts'] as $i => $ALERT) {
 			$expireUTC = $ALERT['expires'];
-      $expires = date('Y-m-d H:i T',$ALERT['expires']);
+      $expires = date($timeFormat,$ALERT['expires']);
       $Status.= "<!-- alert expires $expires (" . $ALERT['expires'] . ") -->\n";
 			$regions = '';
+			$description = str_replace(' * ',"\n* ",$ALERT['description']);
 			if(is_array($ALERT['regions'])) {
 				foreach ($ALERT['regions'] as $i => $reg) {
 					$regions .= $reg . ', ';
@@ -727,7 +729,7 @@ if(isset($JSON['daily']['data'][0]['time'])) { // got good JSON .. process it
 			}
 					
       if (time() < $expireUTC) {
-        $PWforecastwarnings .= '<a href="' . $ALERT['uri'] . '"' . ' title="' . $ALERT['title'] . " expires $expires\n$regions\n---\n" . $ALERT['description'] . '" target="_blank">' . '<strong><span style="color: red">' . $ALERT['title'] . "</span></strong></a><br/>\n";
+        $PWforecastwarnings .= '<a href="' . $ALERT['uri'] . '"' . ' title="' . $ALERT['title'] . " expires $expires\n$regions\n---\n" . $description . '" target="_blank">' . '<strong><span style="color: red">' . $ALERT['title'] . "</span></strong></a><br/>\n";
       }
       else {
         $Status.= "<!-- alert " . $ALERT['title'] . " " . " expired - " . $ALERT['expires'] . " -->\n";
@@ -778,9 +780,10 @@ if (isset($currently['time']) ) { // only generate if we have the data
 	$PWcurrentConditions .= '
   <tr><td colspan="' . $nCols . '" align="center" '.$RTLopt.'><small>' . 
   $tranTab['Currently'].': '. date($timeFormat,$currently['time']) . "<br/>\n";
-	$t = $tranTab['Weather conditions at 999 from forecast point.'];
-	$t = str_replace('999',round($JSON['flags']['nearest-station'],1).' '.$Units['D'],$t);
-	$PWcurrentConditions .= $t .
+# removed V2.02 - nearest-station is always zero
+#	$t = $tranTab['Weather conditions at 999 from forecast point.'];
+#	$t = str_replace('999',round($JSON['flags']['nearest-station'],1).' '.$Units['D'],$t);
+	$PWcurrentConditions .= 
   '</small></td></tr>' . "\n<tr$RTLopt>\n";
   if (isset($currently['icon'])) {
 		$tCond = isset($tranTab[$currently['summary']])?$tranTab[$currently['summary']]:$currently['summary'];
@@ -843,14 +846,15 @@ if (isset($currently['time']) ) { // only generate if we have the data
 ';
 	$PWcurrentConditions .= '    <td valign="middle">
 ';
+  $tFMT = ($showUnitsAs == 'us')?'g:ia':'H:i';
 	if(isset($JSON['daily']['data'][0]['sunriseTime']) and 
 	   isset($JSON['daily']['data'][0]['sunsetTime']) ) {
 	  $PWcurrentConditions .= 
 	  $tranTab['Sunrise'].': <b>'. 
-		   date('H:i',$JSON['daily']['data'][0]['sunriseTime']) . 
+		   date($tFMT,$JSON['daily']['data'][0]['sunriseTime']) . 
 			 "</b><br/>\n" .
 		$tranTab['Sunset'].': <b>'.
-	     date('H:i',$JSON['daily']['data'][0]['sunsetTime']) . 
+	     date($tFMT,$JSON['daily']['data'][0]['sunsetTime']) . 
 			 "</b><br/>\n" ;
 	}
 	$PWcurrentConditions .= '
