@@ -18,8 +18,9 @@
 // Version 2.50 - 18-Jan-2023 - replaced hourly view with merry-timeline 7-day hourly view summary
 // Version 2.51 - 19-Jan-2023 - display ampm or 24h on timeline based on $timeFormat/$SITE['timeFormat']
 // Version 2.52 - 24-Feb-2023 - removed conditions display 'n miles/km from' message as always zero from API
+// Version 2.53 - 21-May-2026 - fixes for PHP 8.5
 //
-$Version = "PW-forecast.php (ML) Version 2.52 - 24-Feb-2023";
+$Version = "PW-forecast.php (ML) Version 2.53 - 21-May-2026";
 //
 // error_reporting(E_ALL);  // uncomment to turn on full error reporting
 //
@@ -1612,7 +1613,7 @@ Array
     " secs -->\n";
 
   //$Status .= "<!-- curl info\n".print_r($cinfo,true)." -->\n";
-  curl_close($ch);                                              // close the cURL session
+  if(PHP_MAJOR_VERSION < 8) {curl_close($ch); }// close the cURL session
   //$Status .= "<!-- raw data\n".$data."\n -->\n"; 
   $i = strpos($data,"\r\n\r\n");
   $headers = substr($data,0,$i);
@@ -2075,7 +2076,7 @@ function PW_WindDir ($degrees) {
   }
   $windlabel = array ("N","NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S",
 	 "SSW","SW", "WSW", "W", "WNW", "NW", "NNW");
-  $dir = $windlabel[ (integer)fmod((($winddir + 11) / 22.5),16) ];
+  $dir = $windlabel[ (int)fmod((($winddir + 11) / 22.5),16) ];
   return($dir);
 
 } // end function PW_WindDir
